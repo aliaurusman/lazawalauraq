@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- ============================================================
+     PAGE: catalogue.html — THE SHOP FLOOR
+     Job: show the live inventory from the database with
+     search, shelf filter, condition filter and price sorting.
+     The CART DRAWER also lives on this page.
+     ============================================================ -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ===== SEO ZONE =====
+       focus keyword idea: "second hand books online Pakistan" -->
+  <title>Catalogue — Buy Pre-loved Books Online | Lazawal Auraq Lahore</title>
+  <meta name="description" content="Browse Lazawal Auraq's live shelf: second-hand Urdu religious, Arabic Islamic, philosophy, history, course books, fiction and self-help titles. Search in English or Urdu, filter by shelf and condition.">
+  <link rel="canonical" href="https://lazawalauraq.netlify.app/catalogue.html">
+
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/shared.js"></script>
+</head>
+<body>
+<div id="errBanner"></div>
+
+<!-- ===== HEADER ===== -->
+<nav><div class="wrap nav-inner">
+  <a class="brand" href="index.html"><span class="mark ur">لازوال اوراق</span><span class="name">Lazawal Auraq</span></a>
+  <div class="nav-actions">
+    <a class="nav-link" href="catalogue.html">Catalogue</a>
+    <a class="nav-link" href="orders.html">My orders</a>
+    <a class="nav-link keep" id="navAuth" href="account.html">Login</a>
+    <button class="cart-btn" onclick="openCart()">Cart <span class="count" id="cartCount">0</span></button>
+  </div>
+</div></nav>
+
+<main class="wrap">
+  <div style="padding-top:34px">
+    <div class="eyebrow">The live shelf</div>
+    <h1 style="color:var(--forest);font-size:30px;font-family:'Fraunces',serif;font-weight:500">Catalogue</h1>
+  </div>
+
+  <!-- SEARCH + FILTERS -->
+  <div class="toolbar">
+    <input id="q" placeholder="Search title or author — English or اردو" oninput="renderShop()">
+    <select id="fCat" onchange="renderShop()"></select>
+    <select id="fCond" onchange="renderShop()"><option value="">Any condition</option><option>Like new</option><option>Good</option><option>Fair</option></select>
+    <select id="fSort" onchange="renderShop()"><option value="new">Newest first</option><option value="lo">Price: low → high</option><option value="hi">Price: high → low</option></select>
+  </div>
+  <div class="result-note" id="resultNote"></div>
+
+  <!-- THE BOOK GRID: filled by JavaScript from the database -->
+  <div class="grid" id="grid"><p style="color:var(--muted)">Loading the shelf…</p></div>
+</main>
+
+<!-- BOOK DETAIL POPUP -->
+<div class="modal-bg" id="detailModal"><div class="modal" id="detailBody"></div></div>
+
+<!-- CART DRAWER (slides in from the right) -->
+<div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="drawer" id="cartDrawer">
+  <div class="drawer-head"><h3>Your cart</h3><button class="x" onclick="closeCart()">×</button></div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="drawer-foot">
+    <div class="total-row"><span>Total</span><span id="cartTotal">Rs 0</span></div>
+    <button class="btn btn-gold" id="checkoutBtn" style="width:100%;justify-content:center;padding:13px" onclick="location.href='checkout.html'">Checkout</button>
+  </div>
+</div>
+
+<footer><div class="wrap foot-inner">
+  <span>© 2026 Lazawal Auraq · لازوال اوراق · Old pages, new stories.</span>
+  <span><a href="https://wa.me/923344360514" target="_blank" rel="noopener">WhatsApp</a>
+  <a href="https://instagram.com" target="_blank" rel="noopener">Instagram</a>
+  <a href="admin.html">Admin</a></span>
+</div></footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== THIS PAGE'S OWN JAVASCRIPT ===== -->
+<script>
+let CATS=[], BOOKS=[];
+const catNames = ids => (ids||[]).map(i=>CATS.find(c=>c.id===i)?.name).filter(Boolean);
+
+/* Fetch shelves + books from the database */
+async function loadCatalogue(){
+  try{
+    const [c,b] = await Promise.all([
+      sb.from('categories').select('*').order('name'),
+      sb.from('books').select('*').order('created_at',{ascending:false})
+    ]);
+    if(c.error) throw c.error; if(b.error) throw b.error;
+    CATS=c.data||[]; BOOKS=b.data||[];
+    $('fCat').innerHTML = `<option value="">All shelves</option>` + CATS.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+    renderShop();
+  }catch(e){ showErr(e.message||String(e)); }
+}
+
+/* Draw the grid, applying whatever search/filters are set */
+function renderShop(){
+  const q=($('q').value||"").toLowerCase(), cat=$('fCat').value, cond=$('fCond').value, sort=$('fSort').value;
+  let list = BOOKS.filter(b => (!cat||(b.category_ids||[]).includes(cat)) && (!cond||b.cond===cond) &&
+    (!q||(b.title_en+" "+(b.title_ur||"")+" "+b.author).toLowerCase().includes(q)));
+  if(sort==='lo') list=[...list].sort((a,b)=>a.price-b.price);
+  else if(sort==='hi') list=[...list].sort((a,b)=>b.price-a.price);
+  $('resultNote').textContent = list.length+" book"+(list.length===1?"":"s")+" on the shelf"+(q||cat||cond?" matching your search":"");
+  $('grid').innerHTML = list.map(b=>{
+    const out=b.qty<=0;
+    return `<div class="card ${out?'oos':''}" onclick="openDetail('${b.id}')">
+      <div class="cover" style="background:${b.cover_url?`url('${esc(b.cover_url)}') center/cover`:b.color}">
+        ${b.cover_url?"":(b.title_ur?`<div class="tur">${esc(b.title_ur)}</div>`:"")+`<div class="ttl">${esc(b.title_en)}</div>`}</div>
+      <div class="meta">
+        <div class="cond">${esc(b.cond)}${b.notes?" · "+esc(b.notes):""}</div>
+        <div class="bk">${esc(b.title_en)}</div>
+        <div class="au">${esc(b.author)} · ${esc(catNames(b.category_ids).join(", ")||"—")}</div>
+        <div class="pr">${rs(b.price)}${b.orig?`<span class="old">${rs(b.orig)}</span>`:""}${b.qty===1?` <span class="badge-low">last copy</span>`:""}</div>
+        <button class="btn btn-sm" ${out?"disabled":""} onclick="event.stopPropagation();addToCart('${b.id}')">${out?"Sold — gone to a new home":"Add to cart"}</button>
+      </div></div>`;
+  }).join("") || `<p style="color:var(--muted)">Nothing matches — try clearing a filter.</p>`;
+}
+
+/* Book detail popup with photos */
+function openDetail(id){
+  const b=BOOKS.find(x=>x.id===id); if(!b) return;
+  $('detailBody').innerHTML = `<div class="close-row"><h3>${esc(b.title_en)}${b.title_ur?` · <span class="ur">${esc(b.title_ur)}</span>`:""}</h3><button class="x" onclick="closeModal('detailModal')">×</button></div>
+    <p style="color:var(--muted);font-size:14px">${esc(b.author)} · ${esc(catNames(b.category_ids).join(", "))}</p>
+    ${b.cover_url?`<img src="${esc(b.cover_url)}" style="max-width:180px;border-radius:4px;margin-top:12px" alt="${esc(b.title_en)} cover">`:""}
+    ${(b.image_urls||[]).length?`<div class="gallery">${b.image_urls.map(u=>`<img src="${esc(u)}" alt="book photo">`).join("")}</div>`:""}
+    <p style="margin-top:12px;font-size:14.5px"><b>${esc(b.cond)}.</b> ${esc(b.notes||"Honestly graded, ready for its next reader.")}</p>
+    <p style="font-size:18px;margin-top:8px">${rs(b.price)}${b.orig?` <span style="text-decoration:line-through;opacity:.5;font-size:14px">${rs(b.orig)}</span>`:""} · ${b.qty>0?b.qty+" in stock":"sold out"}</p>
+    <p style="margin-top:14px">${b.qty>0?`<button class="btn btn-gold" onclick="addToCart('${b.id}');closeModal('detailModal')">Add to cart</button>`:""}</p>`;
+  $('detailModal').classList.add('open');
+}
+
+/* Cart actions (storage lives in js/shared.js) */
+function cartLines(){ return getCart().map(l=>{const b=BOOKS.find(x=>x.id===l.id);return b?{...b,n:l.n}:null}).filter(Boolean); }
+function cartTotal(){ return cartLines().reduce((s,l)=>s+l.price*l.n,0); }
+function addToCart(id){
+  const b=BOOKS.find(x=>x.id===id); if(!b) return;
+  const cart=getCart(); const line=cart.find(x=>x.id===id);
+  if((line?.n||0)>=b.qty){ toast("That's every copy we have."); return; }
+  line?line.n++:cart.push({id,n:1});
+  setCart(cart); toast("Added — "+b.title_en); renderCartBody();
+}
+function chQty(id,d){
+  const cart=getCart(); const line=cart.find(x=>x.id===id); if(!line) return;
+  const b=BOOKS.find(x=>x.id===id); line.n+=d;
+  if(line.n<=0) cart.splice(cart.indexOf(line),1);
+  if(b&&line.n>b.qty) line.n=b.qty;
+  setCart(cart); renderCartBody();
+}
+function openCart(){ renderCartBody(); $('cartOverlay').classList.add('open'); $('cartDrawer').classList.add('open'); }
+function closeCart(){ $('cartOverlay').classList.remove('open'); $('cartDrawer').classList.remove('open'); }
+function renderCartBody(){
+  const lines=cartLines();
+  $('cartBody').innerHTML = lines.length ? lines.map(l=>`<div class="ci">
+    <div class="sw" style="background:${l.cover_url?`url('${esc(l.cover_url)}') center/cover`:l.color}"></div>
+    <div class="inf"><div class="t">${esc(l.title_en)}</div><div class="p">${rs(l.price)} · ${esc(l.cond)}</div></div>
+    <div class="qty"><button onclick="chQty('${l.id}',-1)">−</button><span>${l.n}</span><button onclick="chQty('${l.id}',1)">+</button></div>
+    </div>`).join("") : `<p style="color:var(--muted);font-size:14.5px">Your cart is empty — the shelf is right there.</p>`;
+  $('cartTotal').textContent = rs(cartTotal());
+  $('checkoutBtn').disabled = !lines.length;
+}
+
+/* PAGE START */
+cartCountRefresh();
+updateNav();
+loadCatalogue();
+</script>
+</body>
+</html>

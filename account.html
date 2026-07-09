@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- ============================================================
+     PAGE: account.html — LOGIN / SIGN UP / FORGOT PASSWORD
+     A private utility page, so we tell Google NOT to index it
+     (the "noindex" meta below). If another page sent someone
+     here (e.g. checkout), "?next=checkout.html" in the address
+     sends them back there after login.
+     ============================================================ -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account — Lazawal Auraq</title>
+  <meta name="robots" content="noindex">   <!-- SEO: keep private pages out of Google -->
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/shared.js"></script>
+</head>
+<body>
+<div id="errBanner"></div>
+
+<nav><div class="wrap nav-inner">
+  <a class="brand" href="index.html"><span class="mark ur">لازوال اوراق</span><span class="name">Lazawal Auraq</span></a>
+  <div class="nav-actions">
+    <a class="nav-link" href="catalogue.html">Catalogue</a>
+    <a class="nav-link keep" id="navAuth" href="account.html">Login</a>
+    <a class="cart-btn" href="catalogue.html">Cart <span class="count" id="cartCount">0</span></a>
+  </div>
+</div></nav>
+
+<main class="wrap auth-box">
+  <div class="mark">لازوال اوراق</div>
+  <h2 id="authTitle">Welcome back</h2>
+
+  <!-- These two fields only appear in SIGN-UP mode -->
+  <div id="signupFields" style="display:none">
+    <div class="two">
+      <div><label>Full name</label><input id="aName" autocomplete="name"></div>
+      <div><label>Phone (WhatsApp)</label><input id="aPhone" placeholder="03xx-xxxxxxx" autocomplete="tel"></div>
+    </div>
+  </div>
+
+  <!-- A real <form> helps the browser's password manager work properly -->
+  <form onsubmit="doAuth(document.getElementById('authBtn'));return false">
+    <label>Email</label><input id="aEmail" type="email" autocomplete="email">
+    <label>Password</label><input id="aPass" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+    <p style="font-size:13px;margin-top:8px;text-align:right"><a href="#" onclick="forgotPass();return false" style="color:var(--forest);font-weight:600">Forgot password?</a></p>
+    <div class="err" id="authErr"></div>
+    <p style="margin-top:18px"><button type="submit" class="btn btn-gold" id="authBtn">Log in</button></p>
+  </form>
+
+  <p style="font-size:14px;margin-top:14px;color:var(--muted)"><span id="authSwap"></span></p>
+  <p style="margin-top:10px"><button class="btn btn-ghost btn-sm" id="logoutBtn" style="display:none" onclick="logout()">Log out of this account</button></p>
+  <a class="back" href="index.html">← Back home</a>
+</main>
+
+<footer><div class="wrap foot-inner">
+  <span>© 2026 Lazawal Auraq · لازوال اوراق</span>
+  <span><a href="admin.html">Admin</a></span>
+</div></footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Where to send the person after login ("?next=checkout.html") */
+const NEXT = new URLSearchParams(location.search).get('next') || "index.html";
+
+/* Switch between LOG IN and SIGN UP modes */
+let signupMode=false;
+function swapAuth(su){
+  signupMode=su;
+  $('authTitle').textContent = su?"Create your account":"Welcome back";
+  $('authBtn').textContent = su?"Sign up":"Log in"; delete $('authBtn').dataset.txt;
+  $('signupFields').style.display = su?"block":"none";
+  $('aPass').autocomplete = su?"new-password":"current-password";   // password-manager hint
+  $('authSwap').innerHTML = su
+    ? `Already have an account? <a href="#" onclick="swapAuth(false);return false" style="color:var(--forest);font-weight:600">Log in</a>`
+    : `New here? <a href="#" onclick="swapAuth(true);return false" style="color:var(--forest);font-weight:600">Create an account</a> — it gives you a customer ID and order tracking.`;
+}
+
+/* LOG IN or SIGN UP (Supabase handles the accounts;
+   a database trigger creates the customer profile automatically) */
+async function doAuth(btn){
+  const email=$('aEmail').value.trim(), pass=$('aPass').value;
+  const err=$('authErr'); err.style.display='none';
+  const fail=m=>{err.textContent=m;err.style.display='block';};
+  if(!email||!pass) return fail("Email and password, please.");
+  busy(btn,true);
+  try{
+    if(signupMode){
+      const name=$('aName').value.trim(), phone=$('aPhone').value.trim();
+      if(!name){busy(btn,false);return fail("Tell us your name — it goes on your parcels.");}
+      const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{name,phone}}});
+      if(error) throw error;
+      if(!data.session){busy(btn,false);return fail("Almost there — check your email for a confirmation link, then log in here.");}
+    }else{
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error) throw error;
+    }
+    toast("Welcome!");
+    location.href = NEXT;                       // go back to wherever they came from
+  }catch(e){ fail(e.message||"That didn't work — check the details."); }
+  busy(btn,false);
+}
+
+/* FORGOT PASSWORD: Supabase emails a reset link that returns HERE */
+async function forgotPass(){
+  const email=$('aEmail').value.trim();
+  if(!email){toast("Type your email in the box above first, then tap Forgot password.");return;}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+"/account.html"});
+  toast(error?error.message:"Reset link sent to "+email+" — check the inbox (and spam).");
+}
+async function recoverFlow(){
+  const p=prompt("Welcome back to Lazawal Auraq!\nSet your NEW password (at least 6 characters):");
+  if(!p) return;
+  const {error}=await sb.auth.updateUser({password:p});
+  toast(error?error.message:"Password updated — you're logged in.");
+  updateNav();
+}
+/* Auth events: never do database work INSIDE the callback (deadlock);
+   only schedule it for a moment later. */
+sb.auth.onAuthStateChange((ev,_s)=>{ if(ev==='PASSWORD_RECOVERY'){setTimeout(recoverFlow,0);} });
+
+/* PAGE START */
+swapAuth(false);
+cartCountRefresh();
+updateNav().then(()=>{ if(ME) $('logoutBtn').style.display='inline-flex'; });
+</script>
+</body>
+</html>

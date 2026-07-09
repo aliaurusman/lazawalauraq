@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lazawal Auraq — Admin</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--forest:#1f3d2f;--forest-deep:#152a20;--cream:#f4efe2;--cream-soft:#faf6ec;--gold:#c2953f;--gold-soft:#d9b96e;--ink:#26251f;--muted:#6b6a5f;--line:rgba(31,61,47,.14);--red:#a4442f;--ok:#2e6b46}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--cream);color:var(--ink);line-height:1.55}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500;line-height:1.12}
+.ur{font-family:'Amiri',serif;direction:rtl}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:3px;background:#fff;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold-soft);border-color:var(--gold)}
+label{font-size:13px;font-weight:600;color:var(--forest);display:block;margin:12px 0 5px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--forest);color:var(--cream-soft);padding:11px 18px;border-radius:3px;text-decoration:none;font-size:14px;font-weight:600;border:1px solid var(--forest)}
+.btn:hover{background:var(--forest-deep)}
+.btn-ghost{background:transparent;color:var(--forest)}
+.btn-ghost:hover{background:var(--forest);color:var(--cream-soft)}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:var(--forest-deep)}
+.btn-gold:hover{background:var(--gold-soft)}
+.btn-red{background:transparent;border-color:var(--red);color:var(--red)}
+.btn-red:hover{background:var(--red);color:#fff}
+.btn-sm{padding:7px 12px;font-size:13px}
+#errBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:200;background:var(--red);color:#fff;padding:10px 16px;font-size:13.5px;text-align:center}
+.panel{background:var(--cream-soft);border:1px solid var(--line);border-radius:5px;padding:26px;margin-bottom:20px}
+.panel h3{color:var(--forest);font-size:21px;margin-bottom:6px}
+.panel .sub{font-size:14px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+@media(max-width:600px){.two{grid-template-columns:1fr}}
+.err{color:var(--red);font-size:13.5px;margin-top:10px;font-weight:600;display:none}
+.auth-box{max-width:420px;margin:70px auto;text-align:center;padding-bottom:60px}
+.auth-box .mark{font-family:'Amiri',serif;font-size:44px;color:var(--forest);direction:rtl}
+.auth-box h2{color:var(--forest);margin:6px 0 2px}
+.auth-box p{font-size:14px;color:var(--muted)}
+.auth-box label{text-align:left}
+#dash{display:none}
+.admin-head{display:flex;justify-content:space-between;align-items:center;padding:30px 0 18px;flex-wrap:wrap;gap:10px}
+.admin-head h2{color:var(--forest);font-size:26px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:22px;flex-wrap:wrap}
+.tab{background:none;border:none;padding:10px 14px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab.on{color:var(--forest);border-color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:var(--cream-soft);border:1px solid var(--line);border-radius:4px;padding:16px}
+.stat .n{font-family:'Fraunces',serif;font-size:28px;color:var(--forest)}
+.stat .l{font-size:12.5px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px;background:var(--cream-soft);border:1px solid var(--line)}
+th{text-align:left;padding:10px 12px;background:var(--forest);color:var(--cream);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:middle}
+.tbl-wrap{overflow-x:auto;padding-bottom:50px}
+.order-card{background:var(--cream-soft);border:1px solid var(--line);border-radius:5px;padding:18px;margin-bottom:14px}
+.oc-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.oc-head .oid{font-family:'Fraunces',serif;font-size:18px;color:var(--forest)}
+.oc-body{font-size:14px;margin-top:10px}
+.oc-body .row{display:flex;justify-content:space-between;padding:2px 0}
+.oc-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.shot-thumb{max-width:130px;border-radius:4px;border:1px solid var(--line);cursor:pointer;margin-top:8px}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--muted)}
+.chip.on{background:var(--forest);color:var(--cream);border-color:var(--forest)}
+.status{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+.st-pending{background:#f0e3c4;color:#8a6a1e}.st-verified{background:#d9e8dd;color:var(--ok)}
+.st-shipped{background:#dde4f0;color:#3a5487}.st-delivered{background:var(--forest);color:var(--cream)}
+.st-rejected{background:#f0dcd6;color:var(--red)}
+.cat-check{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.cat-check label{display:flex;align-items:center;gap:5px;margin:0;font-weight:500;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.cat-check input{width:auto}
+fieldset{border:1px dashed var(--gold-soft);border-radius:4px;padding:4px 14px 14px;margin-top:16px}
+legend{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;padding:0 6px}
+.modal-bg{position:fixed;inset:0;background:rgba(21,42,32,.5);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--cream-soft);border-radius:6px;max-width:600px;width:100%;padding:26px}
+.modal h3{color:var(--forest);font-size:21px}
+.close-row{display:flex;justify-content:space-between;align-items:flex-start}
+.x{background:none;border:none;font-size:22px;color:var(--muted)}
+.big-shot{max-width:100%;border-radius:4px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--forest);color:var(--cream);padding:12px 22px;border-radius:4px;font-size:14px;z-index:130;transition:.25s;opacity:0;max-width:90vw}
+.toast.show{transform:translateX(-50%);opacity:1}
+</style>
+</head>
+<body style="background:#e9e2cf">
+<div style="background:#152a20;color:#d9b96e;text-align:center;font-size:12px;letter-spacing:.18em;text-transform:uppercase;padding:9px 12px">🔑 Shopkeeper area · لازوال اوراق staff only — customers belong at the shop</div>
+<div id="errBanner"></div>
+
+<!-- LOGIN GATE -->
+<div id="gate" class="wrap auth-box">
+  <div class="mark">لازوال اوراق</div>
+  <h2>Shopkeeper's door</h2>
+  <p>This side of the counter is for the Lazawal Auraq team.</p>
+  <label>Email</label><input id="gEmail" type="email" autocomplete="email">
+  <label>Password</label><input id="gPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')gLogin(this)">
+  <div class="err" id="gErr"></div>
+  <p style="margin-top:16px"><button class="btn btn-gold" onclick="gLogin(this)">Unlock dashboard</button></p>
+  <p style="margin-top:14px"><a href="index.html" style="color:var(--forest);font-size:14px;font-weight:600">← Back to the shop</a></p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash">
+  <div class="wrap">
+    <div class="admin-head">
+      <h2>Lazawal Auraq — Admin</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Download report (CSV)</button>
+        <a class="btn btn-ghost btn-sm" href="index.html">View shop</a>
+        <button class="btn btn-sm" onclick="gLogout()">Lock &amp; exit</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-t="dashv" onclick="adminTab('dashv')">Overview</button>
+      <button class="tab" data-t="inv" onclick="adminTab('inv')">Inventory</button>
+      <button class="tab" data-t="shelves" onclick="adminTab('shelves')">Shelves</button>
+      <button class="tab" data-t="ord" onclick="adminTab('ord')">Orders</button>
+      <button class="tab" data-t="cust" onclick="adminTab('cust')">Customers</button>
+    </div>
+    <div id="adm-dashv"><div class="stats" id="statRow"></div>
+      <div class="panel"><h3>What needs you today</h3><div id="todo" style="font-size:14.5px;margin-top:8px"></div></div></div>
+    <div id="adm-inv" style="display:none">
+      <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <input id="invQ" placeholder="Search inventory…" style="max-width:320px" oninput="renderInv()">
+        <button class="btn btn-gold" onclick="openBookModal()">+ Add a book</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Title</th><th>Author</th><th>Shelves</th><th>Cond.</th><th>Price</th><th>Stock</th><th>Featured</th><th></th></tr></thead>
+        <tbody id="invBody"></tbody></table></div>
+    </div>
+    <div id="adm-shelves" style="display:none">
+      <div class="panel" style="max-width:560px">
+        <h3>Shelves</h3><p class="sub">Rename, remove, or add shelves. Books can sit on several shelves at once.</p>
+        <div id="shelfList" style="margin:14px 0"></div>
+        <div style="display:flex;gap:8px"><input id="newShelf" placeholder="New shelf name"><button class="btn btn-gold btn-sm" onclick="addShelf(this)">Add</button></div>
+      </div>
+    </div>
+    <div id="adm-ord" style="display:none">
+      <div class="filter-row" id="ordFilters"></div>
+      <div id="ordList" style="padding-bottom:50px"></div>
+    </div>
+    <div id="adm-cust" style="display:none">
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Customer ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Total spent</th><th>Joined</th></tr></thead>
+        <tbody id="custBody"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK EDITOR -->
+<div class="modal-bg" id="bookModal"><div class="modal">
+  <div class="close-row"><h3 id="bmTitle">Add a book</h3><button class="x" onclick="closeModal('bookModal')">×</button></div>
+  <div class="two"><div><label>Title (English)</label><input id="bTitleEn"></div>
+  <div><label>Title (اردو — optional)</label><input id="bTitleUr" class="ur"></div></div>
+  <div class="two"><div><label>Author</label><input id="bAuthor"></div>
+  <div><label>Condition</label><select id="bCond"><option>Like new</option><option>Good</option><option>Fair</option></select></div></div>
+  <label>Shelves (pick any number)</label><div class="cat-check" id="bCats"></div>
+  <div class="two"><div><label>Selling price (Rs)</label><input id="bPrice" type="number" min="0"></div>
+  <div><label>Original price (Rs)</label><input id="bOrig" type="number" min="0"></div></div>
+  <div class="two"><div><label>Stock (copies)</label><input id="bQty" type="number" min="0" value="1"></div>
+  <div><label>Cover colour (if no photo)</label><select id="bColor">
+    <option value="#1f3d2f">Forest green</option><option value="#6d4b2f">Leather brown</option>
+    <option value="#c2953f">Gold</option><option value="#152a20">Deep green</option>
+    <option value="#5a3d5c">Plum</option><option value="#37536b">Slate blue</option></select></div></div>
+  <label>Cover photo (optional — pick from your device)</label>
+  <input type="file" id="bCoverFile" accept="image/*" onchange="pickCover(this)">
+  <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+    <img id="bCoverPrev" style="max-width:80px;border-radius:3px;display:none" alt="cover preview">
+    <button class="btn btn-ghost btn-sm" id="bCoverClear" style="display:none" onclick="clearCover()">Remove cover</button>
+  </div>
+  <label>More photos (optional, up to 4 — tap a preview to remove it)</label>
+  <input type="file" id="bImgsFile" accept="image/*" multiple onchange="pickImgs(this)">
+  <div id="bImgsPrev" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+  <label>Condition notes (shown to customers)</label><input id="bNotes" placeholder="e.g. minor foxing, margin notes">
+  <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="bFeat" style="width:auto"> Feature as Book of the Week on the homepage</label>
+  <fieldset><legend>SEO — customers never see these</legend>
+    <label>SEO title</label><input id="bSeoT" placeholder="What this page should be called in Google">
+    <label>SEO description</label><input id="bSeoD" placeholder="The 1–2 line summary Google shows">
+    <label>Keywords / tags</label><input id="bSeoK" placeholder="e.g. iqbal, philosophy books lahore">
+  </fieldset>
+  <div class="err" id="bmErr"></div>
+  <p style="margin-top:18px"><button class="btn btn-gold" onclick="saveBook(this)">Save book</button></p>
+</div></div>
+
+<div class="modal-bg" id="shotModal"><div class="modal">
+  <div class="close-row"><h3>Payment screenshot</h3><button class="x" onclick="closeModal('shotModal')">×</button></div>
+  <img id="bigShot" class="big-shot" alt="Payment screenshot"></div></div>
+
+<div class="modal-bg" id="shipModal"><div class="modal">
+  <div class="close-row"><h3>Tell the customer it's on the way</h3><button class="x" onclick="closeModal('shipModal')">×</button></div>
+  <p style="font-size:14.5px;color:var(--muted);margin-top:6px">The message is pre-written — one tap on either button.</p>
+  <div id="shipBtns" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== CONFIG ===== */
+const SB_URL="https://rrjezqyrkzoxewgezykr.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyamV6cXlya3pveGV3Z2V6eWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MzY3NjcsImV4cCI6MjA5ODUxMjc2N30.ycL5PIGAfXO4VgZDDDGL4i7iVSKY26ffAGa-yNSOCHw";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+let CATS=[],BOOKS=[],ORDERS=[],PROFS=[];
+const $=id=>document.getElementById(id);
+const rs=n=>"Rs "+Number(n||0).toLocaleString("en-PK");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const oid=n=>"LZ-"+(1000+Number(n));
+const custId=n=>"C-"+(100+Number(n));
+const SL={pending:"Order placed",verified:"Payment verified",shipped:"Shipped",delivered:"Delivered",rejected:"Not verified"};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);}
+function busy(b,on){if(!b)return;b.disabled=on;b.dataset.txt??=b.textContent;b.textContent=on?"One moment…":b.dataset.txt;}
+function closeModal(id){$(id).classList.remove('open');}
+function catNames(ids){return (ids||[]).map(i=>CATS.find(c=>c.id===i)?.name).filter(Boolean);}
+function showErr(m){const e=$('errBanner');e.textContent="Database problem: "+m;e.style.display='block';setTimeout(()=>e.style.display='none',8000);}
+
+/* ===== GATE ===== */
+async function gLogin(btn){
+  const err=$('gErr');err.style.display='none';
+  const fail=m=>{err.textContent=m;err.style.display='block';};
+  busy(btn,true);
+  try{
+    const {error}=await sb.auth.signInWithPassword({email:$('gEmail').value.trim(),password:$('gPass').value});
+    if(error)throw error;
+    await enter();
+  }catch(e){fail(e.message||"That didn't work.");}
+  busy(btn,false);
+}
+async function enter(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return;
+  const {data:prof,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
+  if(error)return showErr(error.message);
+  if(!prof?.is_admin){
+    await sb.auth.signOut();
+    $('gErr').textContent="That account exists, but it isn't the shopkeeper. (Run the is_admin SQL line for your email.)";
+    $('gErr').style.display='block';return;
+  }
+  $('gate').style.display='none';$('dash').style.display='block';
+  await loadAll();adminTab('dashv');
+}
+function gLogout(){sb.auth.signOut().then(()=>{$('dash').style.display='none';$('gate').style.display='block';toast("Dashboard locked.");});}
+
+/* ===== DATA ===== */
+async function loadAll(){
+  try{
+    const [c,b,o,p]=await Promise.all([
+      sb.from('categories').select('*').order('name'),
+      sb.from('books').select('*').order('created_at',{ascending:false}),
+      sb.from('orders').select('*').order('created_at',{ascending:false}),
+      sb.from('profiles').select('*').order('cust_no')
+    ]);
+    for(const r of [c,b,o,p]) if(r.error) throw r.error;
+    CATS=c.data;BOOKS=b.data;ORDERS=o.data;PROFS=p.data;
+  }catch(e){showErr(e.message||String(e));}
+}
+
+/* ===== TABS ===== */
+function adminTab(t){
+  ['dashv','inv','shelves','ord','cust'].forEach(x=>{$('adm-'+x).style.display=x===t?'block':'none';});
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  ({dashv:renderDash,inv:renderInv,shelves:renderShelves,ord:renderOrders,cust:renderCust})[t]();
+}
+function renderDash(){
+  const pending=ORDERS.filter(o=>o.status==='pending').length;
+  const revenue=ORDERS.filter(o=>['verified','shipped','delivered'].includes(o.status)).reduce((s,o)=>s+o.total,0);
+  const stock=BOOKS.reduce((s,b)=>s+b.qty,0);
+  $('statRow').innerHTML=[[BOOKS.length,"Titles listed"],[stock,"Copies in stock"],[pending,"Payments to verify"],[rs(revenue),"Verified revenue"]]
+    .map(([n,l])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  const low=BOOKS.filter(b=>b.qty===1).length,out=BOOKS.filter(b=>b.qty===0).length;
+  $('todo').innerHTML=(pending?`• <b>${pending}</b> payment${pending>1?"s":""} to verify — Orders tab.<br>`:"")
+    +(low?`• <b>${low}</b> title${low>1?"s are":" is"} down to the last copy.<br>`:"")
+    +(out?`• <b>${out}</b> title${out>1?"s":""} sold out — restock or remove.<br>`:"")
+    +(!pending&&!low&&!out?"All quiet on the shelf. Good day to photograph new arrivals.":"");
+}
+
+/* ===== IMAGE UPLOADS (same technique as payment screenshots) ===== */
+let coverData="",imgsData=[];
+function compressFile(f,max=700,q=.72){return new Promise((res,rej)=>{
+  const img=new Image();const fr=new FileReader();
+  fr.onload=e=>{img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));
+    const cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',q));};
+    img.onerror=rej;img.src=e.target.result;};
+  fr.onerror=rej;fr.readAsDataURL(f);});}
+async function pickCover(input){
+  const f=input.files[0];if(!f)return;
+  try{coverData=await compressFile(f);renderCoverPrev();}catch(e){toast("Couldn't read that image.");}
+}
+function clearCover(){coverData="";$('bCoverFile').value="";renderCoverPrev();}
+function renderCoverPrev(){
+  $('bCoverPrev').src=coverData||"";
+  $('bCoverPrev').style.display=coverData?"block":"none";
+  $('bCoverClear').style.display=coverData?"inline-flex":"none";
+}
+async function pickImgs(input){
+  for(const f of [...input.files]){
+    if(imgsData.length>=4){toast("Four photos is plenty — tap one to remove it first.");break;}
+    try{imgsData.push(await compressFile(f));}catch(e){}
+  }
+  input.value="";renderImgsPrev();
+}
+function renderImgsPrev(){
+  $('bImgsPrev').innerHTML=imgsData.map((d,i)=>`<img src="${d}" style="width:64px;height:86px;object-fit:cover;border-radius:3px;border:1px solid var(--line);cursor:pointer" title="Tap to remove" onclick="imgsData.splice(${i},1);renderImgsPrev()">`).join("");
+}
+
+/* ===== INVENTORY ===== */
+let editId=null;
+function renderInv(){
+  const q=($('invQ').value||"").toLowerCase();
+  const list=BOOKS.filter(b=>!q||(b.title_en+" "+b.author).toLowerCase().includes(q));
+  $('invBody').innerHTML=list.map(b=>`<tr>
+    <td><b>${esc(b.title_en)}</b>${b.title_ur?` <span class="ur" style="font-size:15px">${esc(b.title_ur)}</span>`:""}</td>
+    <td>${esc(b.author)}</td><td>${esc(catNames(b.category_ids).join(", ")||"—")}</td><td>${esc(b.cond)}</td>
+    <td>${rs(b.price)}</td><td>${b.qty===0?`<span style="color:var(--red);font-weight:700">0</span>`:b.qty}</td>
+    <td>${b.featured?"★":""}</td>
+    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="openBookModal('${b.id}')">Edit</button>
+    <button class="btn btn-red btn-sm" onclick="delBook('${b.id}')">Delete</button></td></tr>`).join("")
+    ||`<tr><td colspan="8" style="color:var(--muted)">No books match.</td></tr>`;
+}
+function openBookModal(id){
+  editId=id||null;$('bmErr').style.display='none';
+  $('bmTitle').textContent=id?"Edit book":"Add a book";
+  const b=id?BOOKS.find(x=>x.id===id):null;
+  $('bTitleEn').value=b?.title_en||"";$('bTitleUr').value=b?.title_ur||"";$('bAuthor').value=b?.author||"";
+  $('bCond').value=b?.cond||"Good";$('bColor').value=b?.color||"#1f3d2f";
+  $('bPrice').value=b?.price??"";$('bOrig').value=b?.orig??"";$('bQty').value=b?.qty??1;
+  coverData=b?.cover_url||"";imgsData=[...(b?.image_urls||[])];
+  $('bCoverFile').value="";renderCoverPrev();renderImgsPrev();
+  $('bNotes').value=b?.notes||"";$('bFeat').checked=!!b?.featured;
+  $('bSeoT').value=b?.seo_title||"";$('bSeoD').value=b?.seo_desc||"";$('bSeoK').value=b?.seo_keywords||"";
+  $('bCats').innerHTML=CATS.map(c=>`<label><input type="checkbox" value="${c.id}" ${(b?.category_ids||[]).includes(c.id)?"checked":""}>${esc(c.name)}</label>`).join("");
+  $('bookModal').classList.add('open');
+}
+async function saveBook(btn){
+  const t=$('bTitleEn').value.trim(),a=$('bAuthor').value.trim(),p=Number($('bPrice').value),q=Number($('bQty').value);
+  if(!t||!a||!(p>0)||q<0){$('bmErr').textContent="A book needs at least a title, an author, a price above zero and a stock count.";$('bmErr').style.display='block';return;}
+  const cats=[...document.querySelectorAll('#bCats input:checked')].map(i=>i.value);
+  const row={title_en:t,title_ur:$('bTitleUr').value.trim(),author:a,cond:$('bCond').value,color:$('bColor').value,
+    price:p,orig:Number($('bOrig').value)||0,qty:q,notes:$('bNotes').value.trim(),
+    cover_url:coverData,image_urls:imgsData,
+    category_ids:cats,featured:$('bFeat').checked,
+    seo_title:$('bSeoT').value.trim(),seo_desc:$('bSeoD').value.trim(),seo_keywords:$('bSeoK').value.trim()};
+  busy(btn,true);
+  const {error}=editId?await sb.from('books').update(row).eq('id',editId):await sb.from('books').insert(row);
+  busy(btn,false);
+  if(error){$('bmErr').textContent=error.message;$('bmErr').style.display='block';return;}
+  closeModal('bookModal');toast(editId?"Book updated.":"Book added to the shelf.");
+  await loadAll();renderInv();
+}
+async function delBook(id){
+  const b=BOOKS.find(x=>x.id===id);
+  if(!confirm(`Remove "${b.title_en}" from the shelf? This can't be undone.`))return;
+  const {error}=await sb.from('books').delete().eq('id',id);
+  if(error)return showErr(error.message);
+  await loadAll();renderInv();toast("Removed.");
+}
+
+/* ===== SHELVES ===== */
+function renderShelves(){
+  $('shelfList').innerHTML=CATS.map(c=>{
+    const n=BOOKS.filter(b=>(b.category_ids||[]).includes(c.id)).length;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);gap:8px">
+      <span style="font-size:14.5px"><b>${esc(c.name)}</b> <span style="color:var(--muted)">· ${n} book${n===1?"":"s"}</span></span>
+      <span style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="renameShelf('${c.id}')">Rename</button>
+      <button class="btn btn-red btn-sm" onclick="delShelf('${c.id}')">Delete</button></span></div>`;}).join("");
+}
+async function addShelf(btn){
+  const name=$('newShelf').value.trim();if(!name)return;
+  busy(btn,true);const {error}=await sb.from('categories').insert({name});busy(btn,false);
+  if(error)return showErr(error.message);
+  $('newShelf').value="";await loadAll();renderShelves();toast("Shelf added.");
+}
+async function renameShelf(id){
+  const c=CATS.find(x=>x.id===id);const name=prompt("New name for this shelf:",c.name);
+  if(!name||name===c.name)return;
+  const {error}=await sb.from('categories').update({name}).eq('id',id);
+  if(error)return showErr(error.message);
+  await loadAll();renderShelves();toast("Shelf renamed.");
+}
+async function delShelf(id){
+  const c=CATS.find(x=>x.id===id);
+  const n=BOOKS.filter(b=>(b.category_ids||[]).includes(id)).length;
+  if(!confirm(`Delete shelf "${c.name}"?${n?` ${n} book(s) will simply lose this label — the books stay.`:""}`))return;
+  const {error}=await sb.from('categories').delete().eq('id',id);
+  if(error)return showErr(error.message);
+  await loadAll();renderShelves();toast("Shelf deleted.");
+}
+
+/* ===== ORDERS ===== */
+let ordFilter="all";
+function renderOrders(){
+  const counts={all:ORDERS.length};
+  ["pending","verified","shipped","delivered","rejected"].forEach(s=>counts[s]=ORDERS.filter(o=>o.status===s).length);
+  $('ordFilters').innerHTML=["all","pending","verified","shipped","delivered","rejected"].map(s=>
+    `<button class="chip ${ordFilter===s?'on':''}" onclick="ordFilter='${s}';renderOrders()">${s==='all'?'All':SL[s]} (${counts[s]})</button>`).join("");
+  const list=ORDERS.filter(o=>ordFilter==='all'||o.status===ordFilter);
+  const pmap=Object.fromEntries(PROFS.map(p=>[p.id,p]));
+  $('ordList').innerHTML=list.map(o=>{
+    const next={pending:["verified","Verify payment"],verified:["shipped","Mark shipped"],shipped:["delivered","Mark delivered"]}[o.status];
+    const p=pmap[o.customer_id];
+    return `<div class="order-card">
+      <div class="oc-head"><span class="oid">${oid(o.order_no)} · ${rs(o.total)}${p?` · <span style="font-size:13px;color:var(--muted)">${custId(p.cust_no)}</span>`:""}</span><span class="status st-${o.status}">${SL[o.status]}</span></div>
+      <div class="oc-body">
+        ${o.items.map(i=>`<div class="row"><span>${esc(i.title)} × ${i.n}</span><span>${rs(i.price*i.n)}</span></div>`).join("")}
+        <div class="row" style="margin-top:8px;color:var(--muted)"><span>${esc(o.name)} · ${esc(o.phone)} · ${esc(o.email)}</span><span>${new Date(o.created_at).toLocaleDateString()}</span></div>
+        <div class="row" style="color:var(--muted)"><span>${esc(o.addr)}, ${esc(o.city)}${o.notes?" · "+esc(o.notes):""}</span></div>
+        ${o.pay==='shot'?(o.shot?`<img class="shot-thumb" src="${o.shot}" onclick="$('bigShot').src=this.src;$('shotModal').classList.add('open')" alt="payment screenshot">`:"")
+          :`<div style="margin-top:8px;font-size:13.5px;color:var(--gold)"><b>Paying via WhatsApp/Instagram</b> — confirm receipt there, then verify here.</div>`}
+      </div>
+      <div class="oc-actions">
+        ${next?`<button class="btn btn-gold btn-sm" onclick="setStatus('${o.id}','${next[0]}')">${next[1]}</button>`:""}
+        ${o.status==='pending'?`<button class="btn btn-red btn-sm" onclick="rejectOrder('${o.id}')">Reject — payment not received</button>`:""}
+      </div></div>`;
+  }).join("")||`<p style="color:var(--muted)">No orders here yet.</p>`;
+}
+async function setStatus(id,st){
+  const {error}=await sb.from('orders').update({status:st}).eq('id',id);
+  if(error)return showErr(error.message);
+  const o=ORDERS.find(x=>x.id===id);o.status=st;
+  toast("Order "+oid(o.order_no)+" → "+SL[st]);
+  if(st==='shipped')openShipNotify(o);
+  renderOrders();
+}
+function openShipNotify(o){
+  const txt=`Assalam o Alaikum ${o.name}! Good news from Lazawal Auraq — your order ${oid(o.order_no)} (${o.items.map(i=>i.title).join(", ")}) has shipped and should reach you in 1–2 working days. Happy reading! — لازوال اوراق`;
+  $('shipBtns').innerHTML=`
+    <a class="btn btn-gold" target="_blank" rel="noopener" href="https://wa.me/${String(o.phone).replace(/\D/g,"").replace(/^0/,"92")}?text=${encodeURIComponent(txt)}">WhatsApp ${esc((o.name||"").split(' ')[0])}</a>
+    <a class="btn btn-ghost" href="mailto:${encodeURIComponent(o.email)}?subject=${encodeURIComponent("Your order "+oid(o.order_no)+" has shipped — Lazawal Auraq")}&body=${encodeURIComponent(txt)}">Email ${esc((o.name||"").split(' ')[0])}</a>`;
+  $('shipModal').classList.add('open');
+}
+async function rejectOrder(id){
+  if(!confirm("Reject this order? Its reserved books go back on the shelf."))return;
+  const o=ORDERS.find(x=>x.id===id);
+  for(const i of o.items){
+    const b=BOOKS.find(x=>x.id===i.id);
+    if(b)await sb.from('books').update({qty:b.qty+i.n}).eq('id',i.id);
+  }
+  const {error}=await sb.from('orders').update({status:'rejected'}).eq('id',id);
+  if(error)return showErr(error.message);
+  await loadAll();renderOrders();toast("Order rejected — stock restored.");
+}
+
+/* ===== CUSTOMERS ===== */
+function renderCust(){
+  $('custBody').innerHTML=PROFS.filter(p=>!p.is_admin).map(p=>{
+    const theirs=ORDERS.filter(o=>o.customer_id===p.id);
+    const spent=theirs.filter(o=>['verified','shipped','delivered'].includes(o.status)).reduce((s,o)=>s+o.total,0);
+    return `<tr><td><b>${custId(p.cust_no)}</b>${p.is_admin?" 🔑":""}</td><td>${esc(p.name)}</td><td>${esc(p.email)}</td><td>${esc(p.phone)}</td>
+    <td>${theirs.length}</td><td>${rs(spent)}</td><td>${new Date(p.created_at).toLocaleDateString()}</td></tr>`;
+  }).join("")||`<tr><td colspan="7" style="color:var(--muted)">No customers yet.</td></tr>`;
+}
+
+/* ===== CSV ===== */
+function exportCSV(){
+  const pmap=Object.fromEntries(PROFS.map(p=>[p.id,p]));
+  const rows=[["order","date","customer_id","account_email","checkout_name","checkout_email","phone","city","items","total_rs","status","payment_route"]];
+  ORDERS.forEach(o=>{
+    const p=pmap[o.customer_id];
+    rows.push([oid(o.order_no),new Date(o.created_at).toLocaleDateString(),p?custId(p.cust_no):"",p?p.email:"",o.name,o.email,o.phone,o.city,
+      o.items.map(i=>`${i.title} x${i.n}`).join("; "),o.total,o.status,o.pay==='shot'?"screenshot":"whatsapp"]);
+  });
+  rows.push([]);rows.push(["SUMMARY"]);
+  rows.push(["total_orders",ORDERS.length]);
+  rows.push(["verified_revenue_rs",ORDERS.filter(o=>['verified','shipped','delivered'].includes(o.status)).reduce((s,o)=>s+o.total,0)]);
+  rows.push(["customers",PROFS.length]);
+  const csv=rows.map(r=>r.map(c=>`"${String(c??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download="lazawal-auraq-report.csv";a.click();
+  toast("Report downloaded.");
+}
+
+/* ===== BOOT: if already logged in as admin, skip the gate ===== */
+enter();
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- ============================================================
+     PAGE: orders.html — MY ORDERS (customer's order history)
+     Requires login. Shows each order's journey on a timeline:
+     Order placed → Payment verified → Shipped → Delivered.
+     The database rules guarantee people only ever see THEIR
+     OWN orders. Private page → noindex.
+     ============================================================ -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders — Lazawal Auraq</title>
+  <meta name="robots" content="noindex">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/shared.js"></script>
+</head>
+<body>
+<div id="errBanner"></div>
+
+<nav><div class="wrap nav-inner">
+  <a class="brand" href="index.html"><span class="mark ur">لازوال اوراق</span><span class="name">Lazawal Auraq</span></a>
+  <div class="nav-actions">
+    <a class="nav-link" href="catalogue.html">Catalogue</a>
+    <a class="nav-link" href="orders.html">My orders</a>
+    <a class="nav-link keep" id="navAuth" href="account.html">Login</a>
+    <a class="cart-btn" href="catalogue.html">Cart <span class="count" id="cartCount">0</span></a>
+  </div>
+</div></nav>
+
+<main class="wrap" style="max-width:720px;padding:40px 20px 80px">
+  <h1 style="color:var(--forest);font-size:28px;font-family:'Fraunces',serif;font-weight:500">My orders</h1>
+  <div id="myOrders" style="margin-top:20px"><p style="color:var(--muted)">Loading your orders…</p></div>
+  <a class="back" href="catalogue.html">← Back to the catalogue</a>
+</main>
+
+<footer><div class="wrap foot-inner">
+  <span>© 2026 Lazawal Auraq · لازوال اوراق</span>
+  <span><a href="https://wa.me/923344360514" target="_blank" rel="noopener">WhatsApp</a></span>
+</div></footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STAGES=["pending","verified","shipped","delivered"];
+const SL={pending:"Order placed",verified:"Payment verified",shipped:"Shipped",delivered:"Delivered",rejected:"Not verified"};
+
+async function loadOrders(){
+  if(!await requireLogin()) return;                 // not logged in? → account.html, then back here
+  const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});
+  if(error){ $('myOrders').innerHTML=`<p style="color:var(--red)">${esc(error.message)}</p>`; return; }
+  $('myOrders').innerHTML=(data||[]).map(o=>{
+    const idx=STAGES.indexOf(o.status);
+    return `<div class="panel">
+      <div class="oc-head"><span style="font-family:'Fraunces',serif;font-size:18px;color:var(--forest)">${oid(o.order_no)} · ${rs(o.total)}</span><span class="status st-${o.status}">${SL[o.status]}</span></div>
+      ${o.status==='rejected'
+        ? `<p class="sub" style="margin-top:8px">We couldn't verify this payment — message us on WhatsApp and we'll sort it out.</p>`
+        : `<div class="timeline">${STAGES.map((s,i)=>`<div class="tl ${i<=idx?'on':''}">${SL[s]}</div>`).join("")}</div>`}
+      <p class="sub">${o.items.map(i=>`${esc(i.title)} × ${i.n}`).join(" · ")}</p></div>`;
+  }).join("") || `<p style="color:var(--muted)">No orders yet — your first book is waiting in the <a href="catalogue.html" style="color:var(--forest)">catalogue</a>.</p>`;
+}
+
+/* PAGE START */
+cartCountRefresh();
+loadOrders();
+</script>
+</body>
+</html>

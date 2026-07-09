@@ -1,0 +1,9 @@
+# robots.txt — instructions for search-engine crawlers.
+# Public pages: crawl freely. Private/utility pages: stay out.
+User-agent: *
+Disallow: /admin.html
+Disallow: /account.html
+Disallow: /checkout.html
+Disallow: /orders.html
+
+Sitemap: https://lazawalauraq.netlify.app/sitemap.xml

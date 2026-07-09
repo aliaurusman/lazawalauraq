@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- ============================================================
+     PAGE: index.html — THE LANDING PAGE (the shop's front window)
+     Job: welcome people with the brand, NOT bombard them with
+     products. Story + vision + Book of the Week + reviews,
+     then a clear button to the catalogue.
+     ============================================================ -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ===== SEO ZONE (lecture 4 edits happen here) =====
+       title  = the browser-tab text AND Google's blue link
+       description = Google's grey snippet under the link
+       canonical   = tells Google this URL is the official one
+       focus keyword idea: "pre-loved books Lahore"          -->
+  <title>Lazawal Auraq لازوال اوراق — Pre-loved Books in Lahore | Old Pages, New Stories</title>
+  <meta name="description" content="Lazawal Auraq is Lahore's pre-loved bookstore: Urdu religious classics, Arabic Islamic texts, philosophy, history, course books and English titles — honestly graded, fairly priced, delivered to your door.">
+  <link rel="canonical" href="https://lazawalauraq.netlify.app/">
+
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">                <!-- the shared brand stylesheet -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- the database library -->
+  <script src="js/config.js"></script>                        <!-- our keys & settings -->
+  <script src="js/shared.js"></script>                        <!-- helpers, login, cart -->
+</head>
+<body>
+<div id="errBanner"></div>
+
+<!-- ===== HEADER: logo + navigation (same on every page) ===== -->
+<nav><div class="wrap nav-inner">
+  <a class="brand" href="index.html"><span class="mark ur">لازوال اوراق</span><span class="name">Lazawal Auraq</span></a>
+  <div class="nav-actions">
+    <a class="nav-link" href="catalogue.html">Catalogue</a>
+    <a class="nav-link" href="orders.html">My orders</a>
+    <a class="nav-link keep" id="navAuth" href="account.html">Login</a>
+    <a class="cart-btn" href="catalogue.html">Cart <span class="count" id="cartCount">0</span></a>
+  </div>
+</div></nav>
+
+<!-- ===== MAIN: the visible content of THIS page ===== -->
+<main>
+  <!-- HERO: the first thing a visitor sees -->
+  <header class="hero wrap">
+    <div class="eyebrow">Pre-loved bookstore · Lahore</div>
+    <h1>Old pages, new stories.</h1>
+    <div class="tag-ur">پرانے اوراق، نئی کہانیاں</div>
+    <p>We find good books their next reader — Urdu religious classics, Arabic Islamic texts, philosophy, history, course books and English titles. Honestly graded, fairly priced, never read just once.</p>
+    <a class="btn btn-gold" style="font-size:16px;padding:13px 26px" href="catalogue.html">Browse the catalogue</a>
+    <a class="btn btn-ghost" href="#" onclick="wantReview();return false">Write a review</a>
+  </header>
+
+  <div class="wrap">
+    <!-- BOOK OF THE WEEK: filled by JavaScript from the database -->
+    <div id="spotlight"></div>
+
+    <!-- BRAND STORY + VISION: static text, edit freely -->
+    <section class="home-grid">
+      <div class="panel" style="margin:0"><h3>Our story</h3>
+        <p>Lazawal Auraq began with a simple discomfort: too many good books read once, shelved, and forgotten — while readers a few streets away couldn't afford them new. So we buy the books Lahore has finished, grade them honestly, and pass them on. The pencil notes in the margins? A previous reader's gift.</p></div>
+      <div class="panel" style="margin:0"><h3>What we believe</h3>
+        <p>A book isn't used up by being read — it's proven. Our vision is a Lahore where a student's entire reading list costs less than one new textbook, where out-of-print Urdu classics keep circulating, and where no book's story ends on its first shelf. لازوال — because the words don't age.</p></div>
+    </section>
+
+    <!-- CUSTOMER REVIEWS: loaded from the database -->
+    <section style="padding-bottom:50px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h2 style="color:var(--forest);font-size:26px">What readers say</h2>
+        <button class="btn btn-ghost btn-sm" onclick="wantReview()">Add your review</button>
+      </div>
+      <div class="rev-grid" id="revGrid"></div>
+    </section>
+  </div>
+</main>
+
+<!-- REVIEW POPUP (hidden until opened) -->
+<div class="modal-bg" id="reviewModal"><div class="modal">
+  <div class="close-row"><h3>Your review</h3><button class="x" onclick="closeModal('reviewModal')">×</button></div>
+  <p class="sub" style="font-size:14px;color:var(--muted)">How has Lazawal Auraq treated you?</p>
+  <div class="rate-in" id="rateIn"></div>
+  <textarea id="revBody" rows="3" placeholder="A line or two about your experience…"></textarea>
+  <div class="err" id="revErr"></div>
+  <p style="margin-top:14px"><button class="btn btn-gold" onclick="submitReview(this)">Post review</button></p>
+</div></div>
+
+<!-- ===== FOOTER (same on every page) ===== -->
+<footer><div class="wrap foot-inner">
+  <span>© 2026 Lazawal Auraq · لازوال اوراق · Old pages, new stories.</span>
+  <span><a href="https://wa.me/923344360514" target="_blank" rel="noopener">WhatsApp</a>
+  <a href="https://instagram.com" target="_blank" rel="noopener">Instagram</a>
+  <a href="admin.html">Admin</a></span>
+</div></footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== THIS PAGE'S OWN JAVASCRIPT ===== -->
+<script>
+/* Load the featured book + latest reviews from the database */
+async function loadHome(){
+  try{
+    const [b, r] = await Promise.all([
+      sb.from('books').select('*').eq('featured', true).limit(1),          // Book of the Week
+      sb.from('reviews').select('*').order('created_at',{ascending:false}).limit(6)
+    ]);
+    if(b.error) throw b.error;
+    const f = (b.data||[])[0];
+    $('spotlight').innerHTML = f ? `<div class="spotlight">
+      <div class="cv" style="background:${f.cover_url?`url('${esc(f.cover_url)}') center/cover`:f.color}">${f.cover_url?"":esc(f.title_en)}</div>
+      <div><h3>Book of the week</h3>
+        <div class="t">${esc(f.title_en)}${f.title_ur?` · <span class="ur">${esc(f.title_ur)}</span>`:""}</div>
+        <p>${esc(f.author)} — ${esc(f.cond)}${f.notes?", "+esc(f.notes):""}. ${rs(f.price)}${f.orig?` instead of ${rs(f.orig)}`:""}.</p>
+        <p style="margin-top:12px"><a class="btn btn-gold btn-sm" href="catalogue.html">See it in the catalogue</a></p></div></div>` : "";
+    $('revGrid').innerHTML = (r.data||[]).map(rv=>`<div class="rev">
+      <div class="stars">${"★".repeat(rv.rating)}${"☆".repeat(5-rv.rating)}</div>
+      <p>${esc(rv.body)}</p><div class="who">— ${esc(rv.name)}</div></div>`).join("")
+      || `<div class="rev"><p style="color:var(--muted)">No reviews yet — be the first reader to leave one.</p></div>`;
+  }catch(e){ showErr(e.message||String(e)); }
+}
+
+/* Reviews need a logged-in customer */
+function wantReview(){
+  if(!ME){ location.href = "account.html?next=index.html"; return; }
+  $('rateIn').innerHTML=[1,2,3,4,5].map(i=>`<span data-i="${i}" onclick="setRate(${i})">★</span>`).join("");
+  setRate(5); $('revBody').value=""; $('revErr').style.display='none';
+  $('reviewModal').classList.add('open');
+}
+let rateVal=5;
+function setRate(i){ rateVal=i; document.querySelectorAll('#rateIn span').forEach(s=>s.classList.toggle('on', +s.dataset.i<=i)); }
+async function submitReview(btn){
+  const body=$('revBody').value.trim();
+  if(!body){ $('revErr').textContent="Write a line or two first."; $('revErr').style.display='block'; return; }
+  busy(btn,true);
+  const {error}=await sb.from('reviews').insert({customer_id:ME.id, name:PROF?.name||"A reader", rating:rateVal, body});
+  busy(btn,false);
+  if(error){ $('revErr').textContent=error.message; $('revErr').style.display='block'; return; }
+  closeModal('reviewModal'); toast("Thank you — your review is up."); loadHome();
+}
+
+/* PAGE START: refresh cart count, check who's logged in, load content */
+cartCountRefresh();
+updateNav().then(loadHome);
+</script>
+</body>
+</html>
