@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- ============================================================
+     PAGE: blog.html — THE BLOG (article listing page)
+     Job: list every article, newest first, each linking to its
+     own file inside the blog/ folder.
+
+     >>> HOW TO PUBLISH A NEW POST (the whole recipe) <<<
+     1. Add the article file inside the blog/ folder
+        (ask the AI to write it, matching the example).
+     2. Add ONE line to the POSTS list below.
+     3. Add ONE line to sitemap.xml.
+     That's it — the list on this page rebuilds itself.
+     ============================================================ -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ===== SEO ZONE (lecture 4 edits happen here) =====
+       focus keyword idea: "book care tips / reading blog Lahore" -->
+  <title>The Margin — Reading Notes & Book Care | Lazawal Auraq Blog</title>
+  <meta name="description" content="Stories, book-care guides and reading notes from Lazawal Auraq, Lahore's pre-loved bookstore — on giving good books a second life.">
+  <link rel="canonical" href="https://lazawalauraq.netlify.app/blog.html">
+
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/shared.js"></script>
+</head>
+<body>
+<div id="errBanner"></div>
+
+<!-- ===== HEADER (same on every page) ===== -->
+<nav><div class="wrap nav-inner">
+  <a class="brand" href="index.html"><span class="mark ur">لازوال اوراق</span><span class="name">Lazawal Auraq</span></a>
+  <div class="nav-actions">
+    <a class="nav-link" href="catalogue.html">Catalogue</a>
+    <a class="nav-link" href="blog.html">Blog</a>
+    <a class="nav-link" href="orders.html">My orders</a>
+    <a class="nav-link keep" id="navAuth" href="account.html">Login</a>
+    <a class="cart-btn" href="catalogue.html">Cart <span class="count" id="cartCount">0</span></a>
+  </div>
+</div></nav>
+
+<main class="wrap" style="padding-bottom:70px">
+  <header style="padding:44px 0 10px">
+    <div class="eyebrow">The Margin · reading notes from Lazawal Auraq</div>
+    <h1 style="color:var(--forest);font-size:34px;font-family:'Fraunces',serif;font-weight:500">The Margin</h1>
+    <p style="color:var(--muted);font-size:16px;max-width:56ch;margin-top:8px">Notes from the shop — on caring for books, finding your next read, and why a book's second life matters. Like the pencil notes a previous reader leaves behind.</p>
+  </header>
+
+  <!-- The article list draws itself from the POSTS array below -->
+  <div id="postList" style="margin-top:20px"></div>
+</main>
+
+<footer><div class="wrap foot-inner">
+  <span>© 2026 Lazawal Auraq · لازوال اوراق · Old pages, new stories.</span>
+  <span><a href="https://wa.me/923344360514" target="_blank" rel="noopener">WhatsApp</a>
+  <a href="https://instagram.com" target="_blank" rel="noopener">Instagram</a>
+  <a href="admin.html">Admin</a></span>
+</div></footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   THE POST LIST — the ONLY thing you edit to publish a new article.
+   Newest goes at the TOP. Copy one line, change the four values.
+   'slug' must match the article's filename inside blog/ (no .html).
+   ============================================================ */
+const POSTS = [
+  {
+    slug:  "caring-for-second-hand-books",
+    title: "Caring for Second-Hand Books",
+    date:  "2026-07-06",
+    blurb: "A short guide to cleaning, repairing and storing pre-loved books so they last for their next reader."
+  }
+  // ,{ slug:"your-next-slug", title:"Your Next Title", date:"2026-07-20", blurb:"One-line summary." }
+];
+
+/* Turns the list above into the cards you see. You don't edit this. */
+function renderPosts(){
+  const fmt = d => new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  $('postList').innerHTML = POSTS.length ? POSTS.map(p=>`
+    <a class="panel" style="display:block;text-decoration:none;color:inherit;margin-bottom:16px" href="blog/${p.slug}.html">
+      <div class="eyebrow" style="color:var(--gold)">${fmt(p.date)}</div>
+      <h2 style="color:var(--forest);font-size:22px;margin:4px 0 6px">${esc(p.title)}</h2>
+      <p style="color:var(--muted);font-size:15px">${esc(p.blurb)}</p>
+      <span style="color:var(--forest);font-weight:600;font-size:14px">Read more →</span>
+    </a>`).join("") : `<p style="color:var(--muted)">No articles yet — the first one is on its way.</p>`;
+}
+
+/* PAGE START */
+cartCountRefresh();
+updateNav();
+renderPosts();
+</script>
+</body>
+</html>
