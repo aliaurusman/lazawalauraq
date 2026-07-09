@@ -10,14 +10,52 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ===== SEO ZONE (lecture 4 edits happen here) =====
-       title  = the browser-tab text AND Google's blue link
-       description = Google's grey snippet under the link
-       canonical   = tells Google this URL is the official one
-       focus keyword idea: "pre-loved books Lahore"          -->
-  <title>Lazawal Auraq لازوال اوراق — Pre-loved Books in Lahore | Old Pages, New Stories</title>
-  <meta name="description" content="Lazawal Auraq is Lahore's pre-loved bookstore: Urdu religious classics, Arabic Islamic texts, philosophy, history, course books and English titles — honestly graded, fairly priced, delivered to your door.">
+  <!-- ===== SEO ZONE =====
+       title  = browser-tab text AND Google's blue link (keyword FIRST, brand LAST)
+       description = Google's grey snippet — written to earn the click
+       canonical   = the official URL for this page
+       focus keyword: "pre-loved / second-hand books Lahore"      -->
+  <title>Buy Pre-Loved & Second-Hand Books in Lahore | Lazawal Auraq</title>
+  <meta name="description" content="Shop second-hand books in Lahore at Lazawal Auraq — Urdu religious, Arabic Islamic, philosophy, history, course & English titles at up to 70% off. Order on WhatsApp, delivered to your door.">
   <link rel="canonical" href="https://lazawalauraq.netlify.app/">
+
+  <!-- ===== SOCIAL SHARING (Open Graph) =====
+       Controls how the link looks when shared on WhatsApp / Facebook / Instagram.
+       This is how a Lahore bookshop actually spreads, so it matters.        -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lazawal Auraq — Pre-Loved Books in Lahore">
+  <meta property="og:description" content="Old pages, new stories. Second-hand Urdu, Arabic, philosophy, history & English books in Lahore — fairly priced, delivered to your door.">
+  <meta property="og:url" content="https://lazawalauraq.netlify.app/">
+  <meta property="og:image" content="https://lazawalauraq.netlify.app/og-image.jpg">
+  <meta property="og:locale" content="en_PK">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- ===== STRUCTURED DATA (JSON-LD) =====
+       Tells Google "this is a real bookstore in Lahore." Invisible to visitors,
+       but it's what can earn a rich result and a Maps/Business presence.
+       EDIT the address, phone and hours to your real details.               -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BookStore",
+    "name": "Lazawal Auraq",
+    "description": "A pre-loved (second-hand) bookstore in Lahore selling Urdu religious, Arabic Islamic, philosophy, history, course and English books.",
+    "url": "https://lazawalauraq.netlify.app/",
+    "telephone": "+92-334-4360514",
+    "priceRange": "Rs",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Lahore",
+      "addressRegion": "Punjab",
+      "addressCountry": "PK"
+    },
+    "areaServed": "Lahore",
+    "sameAs": [
+      "https://instagram.com/",
+      "https://wa.me/923344360514"
+    ]
+  }
+  </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">                <!-- the shared brand stylesheet -->
@@ -30,23 +68,25 @@
 
 <!-- ===== HEADER: logo + navigation (same on every page) ===== -->
 <nav><div class="wrap nav-inner">
-  <a class="brand" href="index.html"><span class="mark ur">لازوال اوراق</span><span class="name">Lazawal Auraq</span></a>
+  <a class="brand" href="index.html"><span class="mark ur" lang="ur">لازوال اوراق</span><span class="name">Lazawal Auraq</span></a>
   <div class="nav-actions">
     <a class="nav-link" href="catalogue.html">Catalogue</a>
+    <a class="nav-link" href="blog.html">Blog</a>
     <a class="nav-link" href="orders.html">My orders</a>
     <a class="nav-link keep" id="navAuth" href="account.html">Login</a>
     <a class="cart-btn" href="catalogue.html">Cart <span class="count" id="cartCount">0</span></a>
-    <a class="nav-link" href="blog.html">Blog</a>   
   </div>
 </div></nav>
 
 <!-- ===== MAIN: the visible content of THIS page ===== -->
 <main>
-  <!-- HERO: the first thing a visitor sees -->
+  <!-- HERO: the first thing a visitor sees.
+       H1 keeps the brand line but now carries the keyword too, so the page's
+       single most important heading is both beautiful AND findable. -->
   <header class="hero wrap">
     <div class="eyebrow">Pre-loved bookstore · Lahore</div>
-    <h1>Old pages, new stories.</h1>
-    <div class="tag-ur">پرانے اوراق، نئی کہانیاں</div>
+    <h1>Pre-Loved Books in Lahore<span style="display:block;font-size:.62em;color:var(--gold);font-weight:400;margin-top:6px">Old pages, new stories.</span></h1>
+    <div class="tag-ur" lang="ur">پرانے اوراق، نئی کہانیاں</div>
     <p>We find good books their next reader — Urdu religious classics, Arabic Islamic texts, philosophy, history, course books and English titles. Honestly graded, fairly priced, never read just once.</p>
     <a class="btn btn-gold" style="font-size:16px;padding:13px 26px" href="catalogue.html">Browse the catalogue</a>
     <a class="btn btn-ghost" href="#" onclick="wantReview();return false">Write a review</a>
@@ -58,10 +98,10 @@
 
     <!-- BRAND STORY + VISION: static text, edit freely -->
     <section class="home-grid">
-      <div class="panel" style="margin:0"><h3>Our story</h3>
+      <div class="panel" style="margin:0"><h2 style="font-size:21px">Our story</h2>
         <p>Lazawal Auraq began with a simple discomfort: too many good books read once, shelved, and forgotten — while readers a few streets away couldn't afford them new. So we buy the books Lahore has finished, grade them honestly, and pass them on. The pencil notes in the margins? A previous reader's gift.</p></div>
-      <div class="panel" style="margin:0"><h3>What we believe</h3>
-        <p>A book isn't used up by being read — it's proven. Our vision is a Lahore where a student's entire reading list costs less than one new textbook, where out-of-print Urdu classics keep circulating, and where no book's story ends on its first shelf. لازوال — because the words don't age.</p></div>
+      <div class="panel" style="margin:0"><h2 style="font-size:21px">Why buy second-hand books?</h2>
+        <p>A book isn't used up by being read — it's proven. Our vision is a Lahore where a student's entire reading list costs less than one new textbook, where out-of-print Urdu classics keep circulating, and where no book's story ends on its first shelf. <span lang="ur">لازوال</span> — because the words don't age.</p></div>
     </section>
 
     <!-- CUSTOMER REVIEWS: loaded from the database -->
@@ -87,8 +127,9 @@
 
 <!-- ===== FOOTER (same on every page) ===== -->
 <footer><div class="wrap foot-inner">
-  <span>© 2026 Lazawal Auraq · لازوال اوراق · Developed by Ali Hafeez </span>
+  <span>© 2026 Lazawal Auraq · <span lang="ur">لازوال اوراق</span> · Old pages, new stories.</span>
   <span><a href="https://wa.me/923344360514" target="_blank" rel="noopener">WhatsApp</a>
+  <a href="https://instagram.com" target="_blank" rel="noopener">Instagram</a>
   <a href="admin.html">Admin</a></span>
 </div></footer>
 
